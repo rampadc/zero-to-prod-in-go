@@ -127,3 +127,42 @@ In the `main` function, we now assign the router to a new variable with `r := se
 #### Why `setupRouter` returns a pointer?
 
 In Go, pointers stores the memory address of another variable. `setupRouter()` returns a pointer to `gin.Engine` allows us to create only 1 engine and keep modifying that instead of creating many.
+
+## Implementing the health check
+
+For this endpoint, I just want to return a status 200. I was going to say "browsing through the docs, I found this", but that wasn't the case. Gin doesn't seem to have a reference manual like doc.rs with all of the available functions to be seen.
+
+But that's okay. We can peruse the `gin.Context` file for hints, after understanding it provides us with the methods for responding. And I found what I needed `c.Status`.
+
+```go
+r.GET("/health_check", func(c *gin.Context) {
+    c.Status(http.StatusOK)
+})
+```
+
+Let's have a little test!
+
+```sh
+curl -v http://localhost:8080/health_check
+* Host localhost:8080 was resolved.
+* IPv6: ::1
+* IPv4: 127.0.0.1
+*   Trying [::1]:8080...
+* Connected to localhost (::1) port 8080
+> GET /health_check HTTP/1.1
+> Host: localhost:8080
+> User-Agent: curl/8.7.1
+> Accept: */*
+> 
+* Request completely sent off
+< HTTP/1.1 200 OK
+< Date: Mon, 11 Nov 2024 22:51:46 GMT
+< Content-Length: 0
+< 
+* Connection #0 to host localhost left intact
+```
+
+I gotta say, it's really simple to write an API endpoint in Gin!
+
+## Integration testing
+
