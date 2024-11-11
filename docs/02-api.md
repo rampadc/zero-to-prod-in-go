@@ -107,6 +107,17 @@ This defines a route that handles GET requests to any path starting with `/`. Th
 
 Using the `gin.Context`, we get the `name` by querying the URL params. `c.Data(http.StatusOK, "text/plain", []byte("Hello "+name))` sends a HTTP 200 OK response with the content "Hello " followed by the captured name.
 
+`c.Data` is a method in the Gin context that allows you to send a raw response with a specific content and data. Here, we set the response code to be HTTP 200 OK and the response's `content-type` to be `text/plain`. `c.Data` expects a response body of a slice of bytes, which we achieved by using (`[]byte`).
+
+:::tip
+
+While `c.Data` is a versatile option that communicates our intent clearly, Gin also offers `c.String` as a shortcut to send plain text response with the formatted string. It automatically handles the conversion to `[]byte` internally.
+
+```go
+c.String(http.StatusOK, "Hello "+name)
+```
+:::
+
 The default Gin example app returns a JSON object, but I opted for a plain text to keep up with the Hello world tradition.
 
 Finally `return r` returns the built-out router instance.
