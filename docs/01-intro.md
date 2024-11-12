@@ -7,7 +7,7 @@ slug: /
 
 ## Why this Go guide?
 
-I’ve been dipping my toes into Go lately, and I've noticed a gap in the learning resources. Coming from Rust, it has a wealth of excellent guides and tutorials, Go’s landscape is a bit more barren, especially when it comes to practical, production-ready applications for **beginners**. This guide is greatly inspired by Luca Palmieri's [Zero to Production in Rust](https://www.zero2prod.com) book.
+I’ve been dipping my toes into Go lately, and I've noticed a gap in the learning resources. Coming from Rust, which has a wealth of excellent guides and tutorials, Go’s landscape is a bit more barren, especially when it comes to practical, production-ready applications for **beginners**. This guide is greatly inspired by Luca Palmieri's [Zero to Production in Rust](https://www.zero2prod.com) book.
 
 So, I'm writing this guide to share what I've learned and to help others level up their Go skills. We'll cover everything from the basics to advanced topics, including:
 
