@@ -2,8 +2,6 @@
 
 Manual testing is time-consuming. We'd like to automate as much as possible. In future sections, you'll see how this automation extends to deploying to a Kubernetes cluster as well!
 
-The API endpoint we expose is a contract between us and the client. Testing an API endpoint should be tested from the perspective of the client, i.e., the browser. To that, we're effectively doing black box testing.
-
 ## Where do I put my tests?
 
 Ah, the age-old question of how to organise your Go project. There's the [official way](https://go.dev/doc/modules/layout) and the [unofficial way](https://github.com/golang-standards/project-layout). Both recommends that you start off simple: a single `main.go` and a `go.mod` files in your project. But what does a bigger project look like? The unofficial standard's got us covered.
@@ -114,7 +112,7 @@ The final folder structure looks something like this
 
 ```
 
-First, I moved `main.go` into `/cmd/api-server`. Then, because we want to be able to setup and teardown the Gin engine at will, the code should live in another file: `/internal/api-server/router.go`. This will allow us to call `setupRouter()` in any other functions, say in `/test/api-server/health_check_test.go`.
+First, I leave `main.go` where it is. Then, because we want to re-use as much as possible, the router code will go into `/internal/api-server/router.go`. This will allow us to call `setupRouter()` in any other functions, say in `/test/api-server/health_check_test.go`. Note that `setupRouter()` is now `SetupRouter()`. Public functions in Go are capitalised.
 
 The contents of the files look something like this:
 
@@ -129,6 +127,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// capitalised for public scope
 func SetupRouter() *gin.Engine {
 	// Disable Console Color
 	// gin.DisableConsoleColor()
@@ -234,7 +233,7 @@ go test test/**/*.go
 
 ### Why is setupRouter() now SetupRouter()?
 
-Next, I moved the `setupRouter()` code into `/internal/api-server/router.go`. All functions in Go, by default, are private to that file or package.
+All functions in Go, by default, are private to that file or package.
 
 To allow other files in my app to use the function, I need to capitalise the function name, thereby making it public.
 
@@ -264,7 +263,7 @@ It works! Let's change the assertion to see a failure.
 
 ```go
 // /test/api-server/health_check_test.go
-assert.Equal(t, 200, w.Code)
+assert.Equal(t, 201, w.Code)
 ```
 
 ```sh
@@ -294,9 +293,9 @@ Yay! That's what we want to see `expected` != `actual`. I'm going to change the 
 
 ## Are we actually doing integration testing?
 
-Yes, our tests run, but technically, we're not doing integration testing. We're not hitting a live endpoint, i.e., seeing it from the perspective of an API caller.
+Our tests run, but technically, we're not doing integration testing. We're not hitting a live endpoint, i.e., seeing it from the perspective of an API caller.
 
-In the test, `ServeHTTP()` itself does not start a webserver. It's a mock HTTP endpoint. This method comes from the [`httptest` package](https://pkg.go.dev/net/http/httptest).
+In the test, `ServeHTTP()` itself does not start a webserver. It's mocking an HTTP server. This method comes from the [`httptest` package](https://pkg.go.dev/net/http/httptest).
 
 Let's break it down line by line.
 

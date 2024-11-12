@@ -51,9 +51,9 @@ sink = <-ch // receiving a value from a channel, and assigning to sink
 
 More details on Go concurrency can be found on the [Tour of Go](https://go.dev/tour/concurrency).
 
-## Changing the code
+## Testing out the new testing strategy
 
-### Refactoring
+### Code change
 
 Let's move our server code into a goroutine. I'll make a new file call `health_check_2_test.go` for this.
 
@@ -100,11 +100,11 @@ go test test/api-server/health_check_2_test.go
 ok      command-line-arguments  0.457s
 ```
 
-That works! That was straightforward. `startTestServer()` contains the code in our `main.go`. In `TestHealthCheck2`, we're starting the server in a goroutine, then issue a HTTP GET request against the webserver.
+That works! That was straightforward. `startTestServer()` contains the same code as in our `main.go`. In `TestHealthCheck2`, we're starting the server in a goroutine, then issue a HTTP GET request against the webserver.
 
 ### Randomise the port number
 
-Next up, we need to make sure the test server starts on any random HTTP port so it doesn't conflict with our app, and maybe with other tests when we parallelise them. To get a random port, we can pass in `":0"` into the address portion of `Run()`. However, to run queries against that address, we need to know which port the server has chosen.
+Next up, we need to make sure the test server starts on a random port so it doesn't conflict with our app, and maybe with other tests when we parallelise them. To get a random port, we can pass in `":0"` into the address portion of `Run()`. However, to run queries against that address, we need to know which port the server has chosen.
 
 Looking at the signature for `Run()`:
 
@@ -141,7 +141,6 @@ func (srv *Server) ListenAndServe() error {
 	}
 	return srv.Serve(ln)
 }
-
 ```
 
 Same problem. Here, however, inspecting the code for `ListenAndServe`, there's a little nugget!
@@ -226,83 +225,14 @@ func TestHealthCheck2(t *testing.T) {
 }
 ```
 
-Rerun the test, it still works. That's good.
-
-Now, what happens to the server when our test completed? Let's add in some code so that we're sure it got shutdown properly. Let's talk about [`context`](https://pkg.go.dev/context).
-
-### Shutting down the web server when the test completes
-
-In Go, `context` is a mechanism to propagate deadlines, cancellation signals and other request-scoped values across API boundaries and between processes. It allows us to manage the lifecycle of long-running operations and clean up resources properly.
-
-At the top level in our `main` or in this case the testing function, a `context` can be created with `context.Background()`, i.e., it has no parents. Then this context can be passed down to downstream functions using these functions `context.WithTimeout`, `context.WithCancel` and `context.WithDeadline` to create restriction on when the downstream tasks needs to end.
-
-* `context.WithTimeout`: Creates a context with a deadline.
-* `context.WithCancel`: Creates a context that can be canceled manually.
-* `context.WithDeadline`: Combines timeout and cancellation.
-
-In a goroutine, when there is a present `Context` variable present, typically called `ctx`, we can use `ctx.Done()` to check if the context is cancelled and `ctx.Err()` to get the error associated with the cancellation.
-
-So, in our specific use case, we can use a context to signal to the server to shut down gracefully when the test completes.
-
-```go
-// startTestServer is the child function. It now accepts a context telling it to be shutdown.
-func startTestServer(ctx context.Context) (int, error) {
-	router := apiserver.SetupRouter()
-
-	listener, err := net.Listen("tcp", ":0")
-	if err != nil {
-		return 0, err
-	}
-
-	port := listener.Addr().(*net.TCPAddr).Port
-	go func() {
-        // 1. The server starts
-		err = http.Serve(listener, router)
-		if err != nil {
-			panic(err)
-		}
-        // 2. ctx.Done() is deteted, which blocks this goroutine until 
-        // the context is cancelled.
-		<-ctx.Done()
-        // 3. When the context is cancelled, the listener is closed
-		err = listener.Close()
-		if err != nil {
-			panic(err)
-		}
-	}()
-
-	return port, nil
-}
-
-func TestHealthCheck2(t *testing.T) {
-    // A new context is created with context.Background()
-    // This test should complete within 10 seconds, a timeout is created
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-
-    // pass the context to startTestServer
-	port, err := startTestServer(ctx)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	resp, err := http.Get(fmt.Sprintf("http://localhost:%d/health_check", port))
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	assert.Equal(t, http.StatusOK, resp.StatusCode)
-
-    // When the test is done, cancel the context
-	cancel()
-}
-```
-
-Run the test, and we get 
+Rerunning the test
 
 ```
-$  go test test/api-server/health_check_2_test.go
+go test test/api-server/health_check_2_test.go
+```
+
+```
 ok      command-line-arguments  0.230s
-
 ```
 
 Perfect.
@@ -331,7 +261,6 @@ The code should now look like this
 package apiserver
 
 import (
-	"context"
 	"fmt"
 	"net"
 	"net/http"
@@ -351,13 +280,14 @@ func SetupRouter() *gin.Engine {
 	})
 
 	r.GET("/health_check", func(c *gin.Context) {
+		fmt.Printf("Health check got pinged\n")
 		c.Status(http.StatusOK)
 	})
 
 	return r
 }
 
-func StartTestServer(ctx context.Context) (int, error) {
+func StartTestServer() (int, error) {
 	router := SetupRouter()
 
 	listener, err := net.Listen("tcp", ":0")
@@ -368,11 +298,6 @@ func StartTestServer(ctx context.Context) (int, error) {
 	port := listener.Addr().(*net.TCPAddr).Port
 	go func() {
 		err = http.Serve(listener, router)
-		if err != nil {
-			panic(err)
-		}
-		<-ctx.Done()
-		err = listener.Close()
 		if err != nil {
 			panic(err)
 		}
@@ -387,30 +312,25 @@ func StartTestServer(ctx context.Context) (int, error) {
 package test
 
 import (
-	"context"
 	"fmt"
 	apiserver "github.com/rampadc/zero-to-prod-in-go/internal/api-server"
 	"github.com/stretchr/testify/assert"
 	"net/http"
 	"testing"
-	"time"
 )
 
 func TestHealthCheck(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	port, err := apiserver.StartTestServer(ctx)
+	port, err := apiserver.StartTestServer()
 	if err != nil {
 		t.Fatal(err)
 	}
 
+	// port number being used in HTTP GET
 	resp, err := http.Get(fmt.Sprintf("http://localhost:%d/health_check", port))
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
-	cancel()
 }
 ```
-
-Doing integration test with a live server requires a bit more Go knowledge, but interestingly, it's not much more difficult either.
