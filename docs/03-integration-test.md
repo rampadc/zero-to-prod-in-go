@@ -190,7 +190,7 @@ That's a lot of code change. Let's slow down a bit and talk about what's going o
 
 ### Where did that massive github.com/rampadc/... come from?
 
-When you run `go mod init`, it creates a `go.mod` file. Assuming you didn't pass in a module path, saying `my-very-long-module-path`, then your Go module's name will take the name of your directory. To organise my code better, I renamed my root Go module's name to `github.com/rampadc/zero-to-prod-in-go`.
+To comply with conventions, I renamed my root Go module's name to `github.com/rampadc/zero-to-prod-in-go`.
 
 The top part of my `go.mod` looks like this:
 
