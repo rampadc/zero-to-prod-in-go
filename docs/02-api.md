@@ -166,3 +166,118 @@ I gotta say, it's really simple to write an API endpoint in Gin!
 
 ## Integration testing
 
+Manual testing is time-consuming. We'd like to automate as much as possible. In future sections, you'll see how this automation extends to deploying to a Kubernetes cluster as well!
+
+The API endpoint we expose is a contract between us and the client. Testing an API endpoint should be tested from the perspective of the client, i.e., the browser. To that, we're effectively doing black box testing.
+
+### Folder structure
+
+Ah, the age-old question of how to organise your Go project. There's the [official way](https://go.dev/doc/modules/layout) and the [unofficial way]((https://github.com/golang-standards/project-layout)). Both recommends that you start off simple: a single `main.go` and a `go.mod` files in your project. But what does a bigger project look like? The unofficial standard's got us covered.
+
+```sh
+.
+├── LICENSE.md
+├── Makefile
+├── README.md
+# OpenAPI, Swagger, JSON schema, protocol definition files
+├── api
+│   └── README.md
+# Images, logos, etc. for your repository
+├── assets
+│   └── README.md
+# Packaging and CI artifacts
+├── build
+│   ├── README.md
+#### /build/ci: travis.yml, drone files
+│   ├── ci
+#### /build/package: Dockerfile, AMI, deb/rpm/pkg packages
+│   └── package
+# Main applications. The directory should match the name
+# of the executable. It's common to have a `main` function
+# that imports and invokes code from `/internal` and `/pkg`
+# and nothing else.
+├── cmd
+│   ├── README.md
+│   └── _your_app_
+# Configuration file templates or default configs.
+# `confd`, `consul-template` goes here
+# Let's look at hierarchical configs later!
+├── configs
+│   └── README.md
+# IaC, PaaS deployment (K8s, Helm, Terrraform)
+├── deployments
+│   └── README.md
+# Design and user documentation, godoc
+# Realistically, this guide should live in a `docs` folder
+# in the zero-to-prod-in-go source code
+├── docs
+│   └── README.md
+# Examples
+├── examples
+│   └── README.md
+# Self-explanatory
+├── githooks
+│   └── README.md
+├── go.mod
+# System init and process manager/superivsor configs
+├── init
+│   └── README.md
+# Private application and library code. This is code you don't want others
+# importing into their applications or libraries.
+├── internal
+│   ├── README.md
+#### our actual code can go into `/internal/app`
+│   ├── app
+#### and the shared code by our apps could go into `/internal/pkg`
+│   └── pkg
+# Library code that other applications can import
+├── pkg
+│   ├── README.md
+│   └── _your_public_lib_
+# Makefile goes in here. Scripts to perform build, test, install, etc.
+├── scripts
+│   └── README.md
+# Self-explanatory
+├── test
+│   └── README.md
+# External tools, forked code or 3rd party
+├── third_party
+│   └── README.md
+# Supporting tools for this project, can import from /pkg and /internal
+├── tools
+│   └── README.md
+# Application dependencies. `go mod vendor` command creates the `/vendor` directory
+├── vendor
+│   └── README.md
+# SPA,s tatic web assets, server-side templates
+├── web
+│   ├── README.md
+│   ├── app
+│   ├── static
+│   └── template
+# Where your frontend source code lives
+└── website
+    └── README.md
+```
+
+For now, let's proceed with our `main.go` and `go.mod` files and create a new `/test` folder and a test Go file.
+
+Your project folder structure should look something like this:
+
+```sh
+.
+├── go.mod
+├── go.sum
+├── main.go
+└── test
+    └── health_check.go
+```
+
+### Writing our first integration test
+
+We want to 
+
+1. Spawn our app in a separate process.
+2. Use an HTTP client to send requests and get responses from that spawned app.
+3. Profit!
+
