@@ -1,4 +1,4 @@
-# Integration testing
+# Testing the endpoint
 
 Manual testing is time-consuming. We'd like to automate as much as possible. In future sections, you'll see how this automation extends to deploying to a Kubernetes cluster as well!
 
@@ -208,6 +208,30 @@ require (
 
 The equivalent concept in Rust would be the keyword `crate`, denoting the root module.
 
+### Simplifying commands
+
+Moving things around sure makes things less cluttered, but now we have to type a lot more to do simple things, like
+
+```sh
+# Run the main app
+go run main.go
+# Run test
+go run test/api-server/health_check_test.go
+```
+
+Well, for the main app, we can just run
+
+```
+go run .
+```
+
+As for tests, for now, you can specify a glob
+
+```sh
+go test test/**/*.go
+```
+
+
 ### Why is setupRouter() now SetupRouter()?
 
 Next, I moved the `setupRouter()` code into `/internal/api-server/router.go`. All functions in Go, by default, are private to that file or package.
@@ -268,25 +292,25 @@ FAIL
 
 Yay! That's what we want to see `expected` != `actual`. I'm going to change the expected value back to `200` for the test to pass.
 
-## Simplifying commands
+## Are we actually doing integration testing?
 
-Moving things around sure makes things less cluttered, but now we have to type a lot more to do simple things, like
+Yes, our tests run, but technically, we're not doing integration testing. We're not hitting a live endpoint, i.e., seeing it from the perspective of an API caller.
 
-```sh
-# Run the main app
-go run main.go
-# Run test
-go run test/api-server/health_check_test.go
+In the test, `ServeHTTP()` itself does not start a webserver. It's a mock HTTP endpoint. This method comes from the [`httptest` package](https://pkg.go.dev/net/http/httptest).
+
+Let's break it down line by line.
+
+```go
+// w implements the `ResponseWriter` interface. It's used to record all responses from the handler
+w := httptest.NewRecorder()
+
+// This line creates a mock request to the server.
+req := httptest.NewRequest("GET", "/health_check", nil)
+
+// Delegate requests to the Gin router
+router.ServeHTTP(w, req)
 ```
 
-Well, for the main app, we can just run
+Using httptest approach lets our tests run faster as they don't have to start and stop a web server. I mean... if works and it's common practice to do endpoint testing within the Go community, then this is the way.
 
-```
-go run .
-```
-
-As for tests, for now, you can specify a glob
-
-```sh
-go test test/**/*.go
-```
+But, let's spin up a new HTTP server for testing anyway, and see how we fare.
