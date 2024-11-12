@@ -10,12 +10,12 @@ const config: Config = {
   url: 'https://rampadc.github.io',
   // Set the /<baseUrl>/ pathname under which your site is served
   // For GitHub pages deployment, it is often '/<projectName>/'
-  baseUrl: '/z2p-in-go/',
+  baseUrl: '/zero-to-prod-in-go/',
 
   // GitHub pages deployment config.
   // If you aren't using GitHub pages, you don't need these.
   organizationName: 'rampadc', // Usually your GitHub org/user name.
-  projectName: 'z2p-in-go', // Usually your repo name.
+  projectName: 'zero-to-prod-in-go', // Usually your repo name.
   trailingSlash: false,
   githubHost: 'github.com',
 
@@ -40,7 +40,7 @@ const config: Config = {
           // Please change this to your repo.
           // Remove this to remove the "edit this page" links.
           editUrl:
-            'https://github.com/rampadc/z2p-in-go',
+            'https://github.com/rampadc/zero-to-prod-in-go',
         },
         theme: {
           customCss: './src/css/custom.css',
@@ -72,7 +72,7 @@ const config: Config = {
           label: 'Docs',
         },
         {
-          href: 'github.com/rampadc/z2p-in-go',
+          href: 'github.com/rampadc/zero-to-prod-in-go',
           label: 'GitHub',
           position: 'right',
         },
