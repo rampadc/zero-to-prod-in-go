@@ -172,7 +172,7 @@ The API endpoint we expose is a contract between us and the client. Testing an A
 
 ### Folder structure
 
-Ah, the age-old question of how to organise your Go project. There's the [official way](https://go.dev/doc/modules/layout) and the [unofficial way]((https://github.com/golang-standards/project-layout)). Both recommends that you start off simple: a single `main.go` and a `go.mod` files in your project. But what does a bigger project look like? The unofficial standard's got us covered.
+Ah, the age-old question of how to organise your Go project. There's the [official way](https://go.dev/doc/modules/layout) and the [unofficial way](https://github.com/golang-standards/project-layout). Both recommends that you start off simple: a single `main.go` and a `go.mod` files in your project. But what does a bigger project look like? The unofficial standard's got us covered.
 
 ```sh
 .

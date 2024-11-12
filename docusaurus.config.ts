@@ -7,10 +7,10 @@ const config: Config = {
   tagline: 'Like Zero to Production in Rust, but for Go',
 
   // Set the production url of your site here
-  url: 'https://rampadc.github.io',
+  url: 'https://rampadc.github.io/',
   // Set the /<baseUrl>/ pathname under which your site is served
   // For GitHub pages deployment, it is often '/<projectName>/'
-  baseUrl: '/zero-to-prod-in-go/',
+  baseUrl: 'zero-to-prod-in-go',
 
   // GitHub pages deployment config.
   // If you aren't using GitHub pages, you don't need these.
@@ -72,7 +72,7 @@ const config: Config = {
           label: 'Docs',
         },
         {
-          href: 'github.com/rampadc/zero-to-prod-in-go',
+          href: 'https://github.com/rampadc/zero-to-prod-in-go',
           label: 'GitHub',
           position: 'right',
         },
