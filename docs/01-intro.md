@@ -22,3 +22,9 @@ I'm no expert in Go, so this guide will be updated regularly when techniques or 
 ## What's not covered
 
 Installing Go and setting up your IDE. This guide is all about the language and writing applications with it.
+
+## Use case
+
+Throughout this guide, we'll implement a newsletter delivery service, just like in a certain other book. It will be barebone:
+
+> Users can subscribe to the newsletter, and authors can notify users of new content by sending them an e-mail.
